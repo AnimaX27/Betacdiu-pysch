@@ -27,6 +27,7 @@ import openfl.display.BlendMode;
 import openfl.filters.BitmapFilter;
 import openfl.utils.Assets;
 import flixel.math.FlxMath;
+import flixel.util.FlxSave;
 import flixel.addons.transition.FlxTransitionableState;
 #if sys
 import sys.FileSystem;
@@ -43,8 +44,8 @@ import Discord;
 using StringTools;
 
 class FunkinLua {
-	public static var Function_Stop = 1;
-	public static var Function_Continue = 0;
+	public static var Function_Stop:Dynamic = 1;
+	public static var Function_Continue:Dynamic = 0;
 
 	#if LUA_ALLOWED
 	public var lua:State = null;
@@ -99,10 +100,10 @@ class FunkinLua {
 
 		set('isStoryMode', PlayState.isStoryMode);
 		set('difficulty', PlayState.storyDifficulty);
+		set('difficultyName', CoolUtil.difficulties[PlayState.storyDifficulty]);
 		set('weekRaw', PlayState.storyWeek);
 		set('week', WeekData.weeksList[PlayState.storyWeek]);
 		set('seenCutscene', PlayState.seenCutscene);
-		
 		
 		// Block require and os, Should probably have a proper function but this should be good enough for now until someone smarter comes along and recreates a safe version of the OS library
 		set('require', false);
@@ -156,10 +157,11 @@ class FunkinLua {
 		set('defaultGirlfriendX', PlayState.instance.GF_X);
 		set('defaultGirlfriendY', PlayState.instance.GF_Y);
 
-		// Character shit
+		// DATA shit
+		set('stageName', PlayState.SONG.stage);
 		set('boyfriendName', PlayState.SONG.player1);
 		set('dadName', PlayState.SONG.player2);
-		set('gfName', PlayState.SONG.player3);
+		set('gfName', PlayState.SONG.gfVersion);
 
 		// Some settings, no jokes
 		set('downscroll', ClientPrefs.downScroll);
@@ -175,6 +177,20 @@ class FunkinLua {
 		set('healthBarAlpha', ClientPrefs.healthBarAlpha);
 		set('noResetButton', ClientPrefs.noReset);
 		set('lowQuality', ClientPrefs.lowQuality);
+
+		#if windows
+		set('buildTarget', 'windows');
+		#elseif linux
+		set('buildTarget', 'linux');
+		#elseif mac
+		set('buildTarget', 'mac');
+		#elseif html5
+		set('buildTarget', 'browser');
+		#elseif android
+		set('buildTarget', 'android');
+		#else
+		set('buildTarget', 'unknown');
+		#end
 
 		Lua_helper.add_callback(lua, "addLuaScript", function(luaFile:String, ?ignoreAlreadyRunning:Bool = false) { //would be dope asf. 
 			var cervix = luaFile + ".lua";
@@ -469,6 +485,99 @@ class FunkinLua {
 		});
 
 		//Tween shit, but for strums
+		Lua_helper.add_callback(lua,"getRenderedNotes", function() {
+			return PlayState.instance.notes.length;
+		});
+
+		Lua_helper.add_callback(lua,"getRenderedNoteX", function(id:Int) {
+			return PlayState.instance.notes.members[id].x;
+		});
+
+		Lua_helper.add_callback(lua,"getRenderedNoteY", function(id:Int) {
+			return PlayState.instance.notes.members[id].y;
+		});
+
+		Lua_helper.add_callback(lua,"getRenderedNoteType", function(id:Int) {
+			return PlayState.instance.notes.members[id].noteData;
+		});
+
+		Lua_helper.add_callback(lua,"isSustain", function(id:Int) {
+			return PlayState.instance.notes.members[id].isSustainNote;
+		});
+
+		Lua_helper.add_callback(lua,"isParentSustain", function(id:Int) {
+			return PlayState.instance.notes.members[id].prevNote.isSustainNote;
+		});
+
+		
+		Lua_helper.add_callback(lua,"getRenderedNoteParentX", function(id:Int) {
+			return PlayState.instance.notes.members[id].prevNote.x;
+		});
+
+		Lua_helper.add_callback(lua,"getRenderedNoteParentY", function(id:Int) {
+			return PlayState.instance.notes.members[id].prevNote.y;
+		});
+
+		Lua_helper.add_callback(lua,"getRenderedNoteHit", function(id:Int) {
+			return PlayState.instance.notes.members[id].mustPress;
+		});
+
+		Lua_helper.add_callback(lua,"getRenderedNoteCalcX", function(id:Int) {
+			if (PlayState.instance.notes.members[id].mustPress)
+				return PlayState.instance.playerStrums.members[Math.floor(Math.abs(PlayState.instance.notes.members[id].noteData))].x;
+			return PlayState.instance.strumLineNotes.members[Math.floor(Math.abs(PlayState.instance.notes.members[id].noteData))].x;
+		});
+
+		Lua_helper.add_callback(lua,"anyNotes", function() {
+			return PlayState.instance.notes.members.length != 0;
+		});
+
+		Lua_helper.add_callback(lua,"getRenderedNoteStrumtime", function(id:Int) {
+			return PlayState.instance.notes.members[id].strumTime;
+		});
+
+		Lua_helper.add_callback(lua,"getRenderedNoteScaleX", function(id:Int) {
+			return PlayState.instance.notes.members[id].scale.x;
+		});
+
+
+
+		Lua_helper.add_callback(lua,"setRenderedNotePos", function(x:Float,y:Float, id:Int) {
+			if (PlayState.instance.notes.members[id] == null)
+				throw('error! you cannot set a rendered notes position when it doesnt exist! ID: ' + id);
+			else
+			{
+
+				PlayState.instance.notes.members[id].x = x;
+				PlayState.instance.notes.members[id].y = y;
+			}
+		});
+
+		Lua_helper.add_callback(lua,"setRenderedNoteAlpha", function(alpha:Float, id:Int) {
+			
+			PlayState.instance.notes.members[id].alpha = alpha;
+		});
+
+		Lua_helper.add_callback(lua,"setRenderedNoteScale", function(scale:Float, id:Int) {
+			
+			PlayState.instance.notes.members[id].setGraphicSize(Std.int(PlayState.instance.notes.members[id].width * scale));
+		});
+
+		Lua_helper.add_callback(lua,"setRenderedNoteScale", function(scaleX:Int, scaleY:Int, id:Int) {
+			
+			PlayState.instance.notes.members[id].setGraphicSize(scaleX,scaleY);
+		});
+
+		Lua_helper.add_callback(lua,"getRenderedNoteWidth", function(id:Int) {
+			return PlayState.instance.notes.members[id].width;
+		});
+
+
+		Lua_helper.add_callback(lua,"setRenderedNoteAngle", function(angle:Float, id:Int) {
+			
+			PlayState.instance.notes.members[id].angle = angle;
+		});
+
 		Lua_helper.add_callback(lua, "noteTweenX", function(tag:String, note:Int, value:Dynamic, duration:Float, ease:String) {
 			cancelTween(tag);
 			if(note < 0) note = 0;
@@ -852,6 +961,31 @@ class FunkinLua {
 			var cam:FlxCamera = cameraFromString(camera);
 			return FlxG.mouse.getScreenPosition(cam).y;
 		});
+
+		Lua_helper.add_callback(lua, "getMidpointX", function(variable:String) {
+			var obj:FlxObject = getObjectDirectly(variable);
+			if(obj != null) return obj.getMidpoint().x;
+
+			return 0;
+		});
+		Lua_helper.add_callback(lua, "getMidpointY", function(variable:String) {
+			var obj:FlxObject = getObjectDirectly(variable);
+			if(obj != null) return obj.getMidpoint().y;
+
+			return 0;
+		});
+		Lua_helper.add_callback(lua, "getGraphicMidpointX", function(variable:String) {
+			var obj:FlxSprite = getObjectDirectly(variable);
+			if(obj != null) return obj.getGraphicMidpoint().x;
+
+			return 0;
+		});
+		Lua_helper.add_callback(lua, "getGraphicMidpointY", function(variable:String) {
+			var obj:FlxSprite = getObjectDirectly(variable);
+			if(obj != null) return obj.getGraphicMidpoint().y;
+
+			return 0;
+		});
 		Lua_helper.add_callback(lua, "getScreenPositionX", function(variable:String) {
 			var obj:FlxObject = getObjectDirectly(variable);
 			if(obj != null) return obj.getScreenPosition().x;
@@ -986,7 +1120,7 @@ class FunkinLua {
 				object.scrollFactor.set(scrollX, scrollY);
 			}
 		});
-		Lua_helper.add_callback(lua, "addLuaSprite", function(tag:String, front:Bool = false) {
+		Lua_helper.add_callback(lua, "addLuaSprite", function(tag:String, front:Bool = false, ?charLayers:String = 'gf') {
 			if(PlayState.instance.modchartSprites.exists(tag)) {
 				var shit:ModchartSprite = PlayState.instance.modchartSprites.get(tag);
 				if(!shit.wasAdded) {
@@ -1515,6 +1649,45 @@ class FunkinLua {
 			}
 		});
 
+		Lua_helper.add_callback(lua, "initSaveData", function(name:String, ?folder:String = 'psychenginemods') {
+			if(!PlayState.instance.modchartSaves.exists(name))
+			{
+				var save:FlxSave = new FlxSave();
+				save.bind(name, folder);
+				PlayState.instance.modchartSaves.set(name, save);
+				return;
+			}
+			luaTrace('Save file already initialized: ' + name);
+		});
+		Lua_helper.add_callback(lua, "flushSaveData", function(name:String) {
+			if(PlayState.instance.modchartSaves.exists(name))
+			{
+				PlayState.instance.modchartSaves.get(name).flush();
+				return;
+			}
+			luaTrace('Save file not initialized: ' + name);
+		});
+		Lua_helper.add_callback(lua, "getDataFromSave", function(name:String, field:String) {
+			if(PlayState.instance.modchartSaves.exists(name))
+			{
+				var retVal:Dynamic = Reflect.field(PlayState.instance.modchartSaves.get(name).data, field);
+				return retVal;
+			}
+			luaTrace('Save file not initialized: ' + name);
+			return null;
+		});
+		Lua_helper.add_callback(lua, "setDataFromSave", function(name:String, field:String, value:Dynamic) {
+			if(PlayState.instance.modchartSaves.exists(name))
+			{
+				Reflect.setField(PlayState.instance.modchartSaves.get(name).data, field, value);
+				return;
+			}
+			luaTrace('Save file not initialized: ' + name);
+		});
+		
+		Lua_helper.add_callback(lua, "getTextFromFile", function(path:String, ?ignoreModFolders:Bool = false) {
+			return Paths.getTextFromFile(path, ignoreModFolders);
+		});
 
 		// DEPRECATED, DONT MESS WITH THESE SHITS, ITS JUST THERE FOR BACKWARD COMPATIBILITY
 		Lua_helper.add_callback(lua, "luaSpriteMakeGraphic", function(tag:String, width:Int, height:Int, color:String) {
