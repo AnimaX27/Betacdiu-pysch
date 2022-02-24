@@ -86,6 +86,7 @@ class PlayState extends MusicBeatState
 	public var modchartSounds:Map<String, FlxSound> = new Map<String, FlxSound>();
 	public var modchartTexts:Map<String, ModchartText> = new Map<String, ModchartText>();
 	public var modchartSaves:Map<String, FlxSave> = new Map<String, FlxSave>();
+	public var modchartCharacter:Map<String, Character> = new Map<String, Character>();
 	//event variables
 	private var isCameraOnForcedPos:Bool = false;
 	#if (haxe >= "4.0.0")
@@ -261,6 +262,8 @@ class PlayState extends MusicBeatState
 	//Notes
 	var swagNote:Note;
 	var sustainNote:Note;
+	var daBeats:Int = 0;
+	var noteData:Array<SwagSection>;
 
 	override public function create()
 	{
@@ -899,21 +902,75 @@ class PlayState extends MusicBeatState
 
 	//This is NOT ARROW SKIN THIS IS FOR PIXEL TO NORMAL ARROWS BLAH
 	function changeArrows(idk:Bool = false) {
-		if(idk == true)
-		{
-			SONG.noteStyle = 'pixel';
-		}
-		else
-		{
-			SONG.noteStyle = 'normal';
-		}
-
 		isPixelStage = idk;
 		playerStrums.clear();
 		opponentStrums.clear();
 		strumLineNotes.clear();
-		generateStaticArrows(0);
-		generateStaticArrows(1);
+
+		for (section in noteData)
+		{
+			for (songNotes in section.sectionNotes)
+			{
+				var gottaHitNote:Bool = section.mustHitSection;
+
+				if (songNotes[1] > 3)
+				{
+					gottaHitNote = !section.mustHitSection;
+				}
+
+				if(gottaHitNote)
+				{
+					swagNote.reloadNote('', PlayState.SONG.arrowSkin, boyfriend.noteStyle);
+					sustainNote.reloadNote('', PlayState.SONG.arrowSkin, boyfriend.noteStyle);
+				}
+				else
+				{
+					swagNote.reloadNote('', PlayState.SONG.arrowSkin, dad.noteStyle);
+					sustainNote.reloadNote('', PlayState.SONG.arrowSkin, dad.noteStyle);
+				}
+			}
+		}
+		
+		generateStaticArrows(0, dad.noteStyle);
+		generateStaticArrows(1, boyfriend.noteStyle);
+	}
+
+	function changePlayerArrow(style:String)
+	{
+		playerStrums.clear();
+
+		for (section in noteData)
+		{
+			for (songNotes in section.sectionNotes)
+			{
+				var gottaHitNote:Bool = section.mustHitSection;
+
+				if (songNotes[1] > 3)
+				{
+					gottaHitNote = !section.mustHitSection;
+				}
+
+				if(gottaHitNote)
+				{
+					swagNote.reloadNote('', PlayState.SONG.arrowSkin, style);
+					sustainNote.reloadNote('', PlayState.SONG.arrowSkin, style);
+				}
+			}
+		}
+
+		generateStaticArrows(1, boyfriend.noteStyle);		
+	}
+
+	function changeOpponentArrow(style:String) {
+		opponentStrums.clear();
+		for (section in noteData)
+		{
+			for (songNotes in section.sectionNotes)
+			{
+				swagNote.reloadNote('', PlayState.SONG.arrowSkin, style);
+				sustainNote.reloadNote('', PlayState.SONG.arrowSkin, style);
+			}
+		}
 	}
 
 	function set_songSpeed(value:Float):Float
@@ -949,13 +1006,6 @@ class PlayState extends MusicBeatState
 		bfLayersGroup.remove(stage.layers.get("boyfriend"), true);
 		stageGroup.remove(stage, true);
 		stage.destroy();
-
-		if(stage.curStage.startsWith('school')){
-			changeArrows(true);
-		}
-		else{
-			changeArrows(false);
-		}
 
 		stage = new Stage(newStage);
 		stageGroup.add(stage);
@@ -1329,8 +1379,9 @@ class PlayState extends MusicBeatState
 		inCutscene = false;
 		var ret:Dynamic = callOnLuas('onStartCountdown', []);
 		if(ret != FunkinLua.Function_Stop) {
-			generateStaticArrows(0);
-			generateStaticArrows(1);
+			generateStaticArrows(0, dad.noteStyle);
+			generateStaticArrows(1, boyfriend.noteStyle);
+
 			for (i in 0...playerStrums.length) {
 				setOnLuas('defaultPlayerStrumX' + i, playerStrums.members[i].x);
 				setOnLuas('defaultPlayerStrumY' + i, playerStrums.members[i].y);
@@ -1552,14 +1603,14 @@ class PlayState extends MusicBeatState
 		notes = new FlxTypedGroup<Note>();
 		add(notes);
 
-		var noteData:Array<SwagSection>;
+		
 
 		// NEW SHIT
 		noteData = songData.notes;
 
 		var playerCounter:Int = 0;
 
-		var daBeats:Int = 0; // Not exactly representative of 'daBeats' lol, just how much it has looped
+		// Not exactly representative of 'daBeats' lol, just how much it has looped
 
 		var songName:String = Paths.formatToSongPath(SONG.song);
 		var file:String = Paths.json(songName + '/events');
@@ -1607,7 +1658,12 @@ class PlayState extends MusicBeatState
 				else
 					oldNote = null;
 
-				swagNote = new Note(daStrumTime, daNoteData, oldNote);
+				if (gottaHitNote) {
+					swagNote = new Note(daStrumTime, daNoteData, oldNote, false, false, boyfriend.noteStyle);
+				} else {
+					swagNote = new Note(daStrumTime, daNoteData, oldNote, false, false, dad.noteStyle);
+				}
+				
 				swagNote.mustPress = gottaHitNote;
 				swagNote.sustainLength = songNotes[2];
 				swagNote.gfNote = (section.gfSection && (songNotes[1]<4));
@@ -1626,8 +1682,12 @@ class PlayState extends MusicBeatState
 					for (susNote in 0...floorSus+1)
 					{
 						oldNote = unspawnNotes[Std.int(unspawnNotes.length - 1)];
-
-						sustainNote = new Note(daStrumTime + (Conductor.stepCrochet * susNote) + (Conductor.stepCrochet / FlxMath.roundDecimal(songSpeed, 2)), daNoteData, oldNote, true);
+						if (gottaHitNote) {
+							sustainNote = new Note(daStrumTime + (Conductor.stepCrochet * susNote) + (Conductor.stepCrochet / FlxMath.roundDecimal(songSpeed, 2)), daNoteData, oldNote, true, false, boyfriend.noteStyle);
+						} else{
+							sustainNote = new Note(daStrumTime + (Conductor.stepCrochet * susNote) + (Conductor.stepCrochet / FlxMath.roundDecimal(songSpeed, 2)), daNoteData, oldNote, true, false, dad.noteStyle);
+						}
+						
 						sustainNote.mustPress = gottaHitNote;
 						sustainNote.gfNote = (section.gfSection && (songNotes[1]<4));
 						sustainNote.noteType = swagNote.noteType;
@@ -1746,7 +1806,7 @@ class PlayState extends MusicBeatState
 
 	}
 
-	private function generateStaticArrows(player:Int):Void
+	private function generateStaticArrows(player:Int, style:String):Void
 	{
 		for (i in 0...4)
 		{
@@ -1754,7 +1814,7 @@ class PlayState extends MusicBeatState
 			var targetAlpha:Float = 1;
 			if (player < 1 && ClientPrefs.middleScroll) targetAlpha = 0.35;
 
-			var babyArrow:StrumNote = new StrumNote(ClientPrefs.middleScroll ? STRUM_X_MIDDLESCROLL : STRUM_X, strumLine.y, i, player);
+			var babyArrow:StrumNote = new StrumNote(ClientPrefs.middleScroll ? STRUM_X_MIDDLESCROLL : STRUM_X, strumLine.y, i, player, style);
 			babyArrow.downScroll = ClientPrefs.downScroll;
 			if (!isStoryMode)
 			{
@@ -2675,6 +2735,7 @@ class PlayState extends MusicBeatState
 							boyfriend = boyfriendMap.get(value2);
 							boyfriend.alpha = lastAlpha;
 							iconP1.changeIcon(boyfriend.healthIcon);
+							changePlayerArrow(boyfriend.noteStyle);
 						}
 						setOnLuas('boyfriendName', boyfriend.curCharacter);
 
@@ -2697,6 +2758,7 @@ class PlayState extends MusicBeatState
 							}
 							dad.alpha = lastAlpha;
 							iconP2.changeIcon(dad.healthIcon);
+							changeOpponentArrow(dad.noteStyle);
 						}
 						setOnLuas('dadName', dad.curCharacter);
 

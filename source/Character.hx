@@ -26,6 +26,7 @@ typedef CharacterFile = {
 	var scale:Float;
 	var sing_duration:Float;
 	var healthicon:String;
+	var style_note:String;
 
 	var position:Array<Float>;
 	var camera_position:Array<Float>;
@@ -42,6 +43,7 @@ typedef AnimArray = {
 	var loop:Bool;
 	var indices:Array<Int>;
 	var offsets:Array<Int>;
+	var offsets_player:Array<Int>;
 }
 
 class Character extends FlxSprite
@@ -64,12 +66,14 @@ class Character extends FlxSprite
 	
 
 	public var healthIcon:String = 'face';
+	public var noteStyle:String = 'normal';
 	public var animationsArray:Array<AnimArray> = [];
 
 	public var positionArray:Array<Float> = [0, 0];
 	public var cameraPosition:Array<Float> = [0, 0];
 
 	public var hasMissAnimations:Bool = false;
+	public var swapIt:Bool = false;
 
 	//Used on Character Editor
 	public var imageFile:String = '';
@@ -197,6 +201,7 @@ class Character extends FlxSprite
 				cameraPosition = json.camera_position;
 
 				healthIcon = json.healthicon;
+				noteStyle = json.style_note;
 				singDuration = json.sing_duration;
 				flipX = !!json.flip_x;
 				if(json.no_antialiasing) {
@@ -224,7 +229,10 @@ class Character extends FlxSprite
 							animation.addByPrefix(animAnim, animName, animFps, animLoop);
 						}
 
-						if(anim.offsets != null && anim.offsets.length > 1) {
+						if(isPlayer && anim.offsets_player != null && anim.offsets_player.length > 1) {
+							addOffset(anim.anim, anim.offsets_player[0], anim.offsets_player[1]);
+						}
+						else if(anim.offsets != null && anim.offsets.length > 1) {
 							addOffset(anim.anim, anim.offsets[0], anim.offsets[1]);
 						}
 					}
@@ -243,7 +251,7 @@ class Character extends FlxSprite
 		{
 			flipX = !flipX;
 
-			/*// Doesn't flip for BF, since his are already in the right place???
+			/*// Doesn't flip for BF, since his are already in the right place???*/
 			if (!curCharacter.startsWith('bf'))
 			{
 				// var animArray
@@ -261,7 +269,43 @@ class Character extends FlxSprite
 					animation.getByName('singRIGHTmiss').frames = animation.getByName('singLEFTmiss').frames;
 					animation.getByName('singLEFTmiss').frames = oldMiss;
 				}
-			}*/
+
+				// IF THEY HAVE ALT ANIMATIONS??
+				if(animation.getByName('singLEFT-alt') != null && animation.getByName('singRIGHT-alt') != null)
+				{
+					var oldAlt = animation.getByName('singRIGHT-alt').frames;
+					animation.getByName('singRIGHT-alt').frames = animation.getByName('singLEFT-alt').frames;
+					animation.getByName('singLEFT-alt').frames = oldAlt;
+				}
+			}
+		}
+		else
+		{
+			if (curCharacter.startsWith('bf'))
+			{
+				if(animation.getByName('singLEFT') != null && animation.getByName('singRIGHT') != null)
+				{
+					var oldLeft = animation.getByName('singLEFT').frames;
+					animation.getByName('singLEFT').frames = animation.getByName('singRIGHT').frames;
+					animation.getByName('singRIGHT').frames = oldLeft;
+				}
+
+				// IF THEY HAVE MISS ANIMATIONS??
+				if (animation.getByName('singLEFTmiss') != null && animation.getByName('singRIGHTmiss') != null)
+				{
+					var oldMiss = animation.getByName('singLEFTmiss').frames;
+					animation.getByName('singLEFTmiss').frames = animation.getByName('singRIGHTmiss').frames;
+					animation.getByName('singRIGHTmiss').frames = oldMiss;
+				}
+
+				// IF THEY HAVE ALT ANIMATIONS??
+				if(animation.getByName('singLEFT-alt') != null && animation.getByName('singRIGHT-alt') != null)
+				{
+					var oldAlt = animation.getByName('singLEFT-alt').frames;
+					animation.getByName('singLEFT-alt').frames = animation.getByName('singRIGHT-alt').frames;
+					animation.getByName('singRIGHT-alt').frames = oldAlt;
+				}
+			}
 		}
 	}
 

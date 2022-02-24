@@ -34,7 +34,7 @@ class StrumNote extends FlxSprite
 		return value;
 	}
 
-	public function new(x:Float, y:Float, leData:Int, player:Int) {
+	public function new(x:Float, y:Float, leData:Int, player:Int, noteStyle:String = 'normal') {
 		colorSwap = new ColorSwap();
 		shader = colorSwap.shader;
 		noteData = leData;
@@ -44,10 +44,13 @@ class StrumNote extends FlxSprite
 
 		var skin:String = 'NOTE_assets';
 		var idk:String = 'normal';
+
+		if(PlayState.isPixelStage) noteStyle = 'pixel';
+		
 		if(PlayState.SONG.arrowSkin != null && PlayState.SONG.arrowSkin.length > 1) skin = PlayState.SONG.arrowSkin;
 		texture = skin; //Load texture and anims
 
-		if(PlayState.SONG.noteStyle != null && PlayState.SONG.noteStyle.length > 1) idk = PlayState.SONG.noteStyle;
+		if(noteStyle != null && noteStyle.length > 1) idk = noteStyle;
 		style = idk;
 		scrollFactor.set();
 	}
@@ -120,6 +123,133 @@ class StrumNote extends FlxSprite
 						animation.addByPrefix('pressed', 'right press', 24, false);
 						animation.addByPrefix('confirm', 'right confirm', 24, false);
 				}
+			case 'pixel-corrupted' | 'neon-pixel' | 'doki-pixel':
+				var suf:String = "";
+				switch (style)
+				{
+					case 'pixel-corrupted':
+						suf = '-corrupted';
+					case 'neon':
+						suf = '-neon';
+					case 'doki-pixel':
+						suf = '-doki';
+				}
+				loadGraphic(Paths.image('notestuff/arrows-pixels'+suf), true, 17, 17);
+				
+				animation.add('green', [6]);
+				animation.add('red', [7]);
+				animation.add('blue', [5]);
+				animation.add('purplel', [4]);
+
+				setGraphicSize(Std.int(width * PlayState.daPixelZoom));
+				updateHitbox();
+				antialiasing = false;
+
+				switch (Math.abs(noteData))
+				{
+					case 2:
+						animation.add('static', [2]);
+						animation.add('pressed', [6, 10], 12, false);
+						animation.add('confirm', [14, 18], 12, false);
+					case 3:
+						animation.add('static', [3]);
+						animation.add('pressed', [7, 11], 12, false);
+						animation.add('confirm', [15, 19], 24, false);
+					case 1:
+						animation.add('static', [1]);
+						animation.add('pressed', [5, 9], 12, false);
+						animation.add('confirm', [13, 17], 24, false);
+					case 0:
+						animation.add('static', [0]);
+						animation.add('pressed', [4, 8], 12, false);
+						animation.add('confirm', [12, 16], 24, false);
+				}
+			case 'gray' | 'corrupted' | 'cross' | 'taki' | 'kapi' | '1930' | 'agoti' | 'fever' | 'void' | 'shootin' | 'holofunk' | 'trollge' | 'starecrown'| 'tabi' | 'sketchy' | 'darker' | 'doki' | 'nyan' | 'bf-b&b' | 'amor' | 'bluskys' | 'bob' | 'bosip' | 'ron' | 'gloopy' | 'party-crasher' | 'eteled' | 'austin' | 'stepmania'| 'littleman':
+				frames = Paths.getSparrowAtlas('notestuff/'+style);
+				animation.addByPrefix('green', 'arrowUP');
+				animation.addByPrefix('blue', 'arrowDOWN');
+				animation.addByPrefix('purple', 'arrowLEFT');
+				animation.addByPrefix('red', 'arrowRIGHT');
+	
+				antialiasing = ClientPrefs.globalAntialiasing;
+				setGraphicSize(Std.int(width * 0.7));
+	
+				switch (Math.abs(noteData))
+				{
+					case 0:
+						animation.addByPrefix('static', 'arrowLEFT');
+						animation.addByPrefix('pressed', 'left press', 24, false);
+						animation.addByPrefix('confirm', 'left confirm', 24, false);
+					case 1:
+						animation.addByPrefix('static', 'arrowDOWN');
+						animation.addByPrefix('pressed', 'down press', 24, false);
+						animation.addByPrefix('confirm', 'down confirm', 24, false);
+					case 2:
+						animation.addByPrefix('static', 'arrowUP');
+						animation.addByPrefix('pressed', 'up press', 24, false);
+						animation.addByPrefix('confirm', 'up confirm', 24, false);
+					case 3:
+						animation.addByPrefix('static', 'arrowRIGHT');
+						animation.addByPrefix('pressed', 'right press', 24, false);
+						animation.addByPrefix('confirm', 'right confirm', 24, false);
+				}
+			case 'bw':
+				frames = Paths.getSparrowAtlas('notestuff/NOTE_assets_BW');
+				animation.addByPrefix('green', 'green0');
+				animation.addByPrefix('blue', 'blue0');
+				animation.addByPrefix('purple', 'purple0');
+				animation.addByPrefix('red', 'red0');
+
+				antialiasing = ClientPrefs.globalAntialiasing;
+				setGraphicSize(Std.int(width * 0.7));
+
+				switch (Math.abs(noteData))
+				{
+					case 0:
+						animation.addByPrefix('static', 'purple0');
+						animation.addByPrefix('pressed', 'left press', 24, false);
+						animation.addByPrefix('confirm', 'left confirm', 24, false);
+					case 1:
+						animation.addByPrefix('static', 'blue0');
+						animation.addByPrefix('pressed', 'down press', 24, false);
+						animation.addByPrefix('confirm', 'down confirm', 24, false);
+					case 2:
+						animation.addByPrefix('static', 'green0');
+						animation.addByPrefix('pressed', 'up press', 24, false);
+						animation.addByPrefix('confirm', 'up confirm', 24, false);
+					case 3:
+						animation.addByPrefix('static', 'red0');
+						animation.addByPrefix('pressed', 'right press', 24, false);
+						animation.addByPrefix('confirm', 'right confirm', 24, false);
+				}
+			case 'guitar':
+				frames = Paths.getSparrowAtlas('notestuff/GH_NOTES');
+				animation.addByPrefix('green', 'upNoteBaby');
+				animation.addByPrefix('blue', 'downNoteBaby');
+				animation.addByPrefix('purple', 'leftNoteBaby');
+				animation.addByPrefix('red', 'rightNoteBaby');
+
+				antialiasing = ClientPrefs.globalAntialiasing;
+
+				switch (Math.abs(noteData))
+				{
+					case 0:
+						animation.addByPrefix('static', 'leftNoteBaby');
+						animation.addByPrefix('pressed', 'left press', 24, false);
+						animation.addByPrefix('confirm', 'left confirm', 24, false);
+					case 1:
+						animation.addByPrefix('static', 'downNoteBaby');
+						animation.addByPrefix('pressed', 'down press', 24, false);
+						animation.addByPrefix('confirm', 'down confirm', 24, false);
+					case 2:
+						animation.addByPrefix('static', 'upNoteBaby');
+						animation.addByPrefix('pressed', 'up press', 24, false);
+						animation.addByPrefix('confirm', 'up confirm', 24, false);
+					case 3:
+						animation.addByPrefix('static', 'rightNoteBaby');
+						animation.addByPrefix('pressed', 'right press', 24, false);
+						animation.addByPrefix('confirm', 'right confirm', 24, false);
+				}				
 		}
 
 		updateHitbox();

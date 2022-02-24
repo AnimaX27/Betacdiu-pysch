@@ -974,18 +974,66 @@ class FunkinLua {
 
 			return 0;
 		});
+		
+		Lua_helper.add_callback(lua, "getMidpointX", function(variable:String) {
+			var obj:FlxObject = getObjectDirectly(variable);
+			if(obj != null) return obj.getMidpoint().x;
+
+			return 0;
+		});
+		Lua_helper.add_callback(lua, "getMidpointY", function(variable:String) {
+			var obj:FlxObject = getObjectDirectly(variable);
+			if(obj != null) return obj.getMidpoint().y;
+
+			return 0;
+		});
+		//Added Char beacuse for me I want to test the character
+		Lua_helper.add_callback(lua, "getGraphicMidpointXChar", function(variable:String) {
+			var obj:Character;
+			switch(variable.toLowerCase()) {
+				case 'dad' | 'opponent':
+					obj = PlayState.instance.dad;
+				case 'gf' | 'girlfriend':
+					obj = PlayState.instance.gf;
+				default:
+					obj = PlayState.instance.boyfriend;
+			}
+
+			if(obj != null) return obj.getGraphicMidpoint().x;
+
+			return 0;
+		});
+
+		Lua_helper.add_callback(lua, "getGraphicMidpointYChar", function(variable:String) {
+            var obj:Character;
+			switch(variable.toLowerCase()) {
+				case 'dad' | 'opponent':
+					obj = PlayState.instance.dad;
+				case 'gf' | 'girlfriend':
+					obj = PlayState.instance.gf;
+				default:
+					obj = PlayState.instance.boyfriend;
+			}
+			if(obj != null) return obj.getGraphicMidpoint().y;
+
+			return 0;
+		});
+
 		Lua_helper.add_callback(lua, "getGraphicMidpointX", function(variable:String) {
 			var obj:FlxSprite = getObjectDirectly(variable);
 			if(obj != null) return obj.getGraphicMidpoint().x;
 
 			return 0;
 		});
+
 		Lua_helper.add_callback(lua, "getGraphicMidpointY", function(variable:String) {
 			var obj:FlxSprite = getObjectDirectly(variable);
 			if(obj != null) return obj.getGraphicMidpoint().y;
 
 			return 0;
 		});
+
+
 		Lua_helper.add_callback(lua, "getScreenPositionX", function(variable:String) {
 			var obj:FlxObject = getObjectDirectly(variable);
 			if(obj != null) return obj.getScreenPosition().x;
@@ -2027,6 +2075,18 @@ class FunkinLua {
 		var coverMeInPiss:Dynamic = getObjectDirectly(killMe[0], checkForTextsToo);
 		for (i in 1...killMe.length-1) {
 			coverMeInPiss = Reflect.getProperty(coverMeInPiss, killMe[i]);
+		}
+		return coverMeInPiss;
+	}
+
+	function getCharacterDirectly(characterName:String):Dynamic
+	{
+		var coverMeInPiss:Dynamic = null;
+
+		if(PlayState.instance.modchartCharacter.exists(characterName)) {
+			coverMeInPiss = PlayState.instance.modchartCharacter.get(characterName);
+		} else {
+			coverMeInPiss = Reflect.getProperty(getInstance(), characterName);
 		}
 		return coverMeInPiss;
 	}
