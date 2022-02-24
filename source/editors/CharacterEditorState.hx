@@ -50,6 +50,7 @@ class CharacterEditorState extends MusicBeatState
 	var textAnim:FlxText;
 	var bgLayer:FlxTypedGroup<FlxSprite>;
 	var charLayer:FlxTypedGroup<Character>;
+	var arrowlayer:FlxTypedGroup<StrumNote>;
 	var dumbTexts:FlxTypedGroup<FlxText>;
 	//var animList:Array<String> = [];
 	var curAnim:Int = 0;
@@ -74,6 +75,43 @@ class CharacterEditorState extends MusicBeatState
 	var changeBGbutton:FlxButton;
 	var leHealthIcon:HealthIcon;
 	var characterList:Array<String> = [];
+	var arrowList:Array<String> =[
+		'normal',
+		'pixel',
+		'pixel-corrupted',
+		'neon-pixel',
+		'doki-pixel',
+		'gray',
+		'corrupted',
+		'cross',
+		'taki',
+		'kapi',
+		'1930',
+		'agoti',
+		'fever',
+		'void',
+		'shootin',
+		'holofunk',
+		'trollge',
+		'starecrown',
+		'tabi',
+		'sketchy',
+		'darker',
+		'doki',
+		'nyan',
+		'bf-b&b',
+		'amor',
+		'bluskys',
+		'bob',
+		'bosip',
+		'ron',
+		'gloopy',
+		'party-crasher',
+		'eteled',
+		'austin',
+		'stepmania',
+		'littleman'
+	];
 
 	var cameraFollowPointer:FlxSprite;
 	var healthBarBG:FlxSprite;
@@ -113,6 +151,25 @@ class CharacterEditorState extends MusicBeatState
 		changeBGbutton.cameras = [camMenu];
 
 		loadChar(!daAnim.startsWith('bf'), false);
+
+		/*for (i in 0...4)
+		{
+			var babyArrow:StrumNote;
+			if(char.noteStyle == null)
+			{
+				babyArrow = new StrumNote(PlayState.STRUM_X, 50, i, 0, char.noteStyle);
+			}
+			else
+			{
+				babyArrow = new StrumNote(PlayState.STRUM_X, 50, i, 0, PlayState.SONG.noteStyle);
+			}
+
+			arrowlayer.add(babyArrow);
+		}
+
+		arrowlayer = new FlxTypedGroup<StrumNote>();
+		add(arrowlayer);
+		arrowlayer.cameras = [camHUD];*/
 
 		healthBarBG = new FlxSprite(30, FlxG.height - 75).loadGraphic(Paths.image('healthBar'));
 		healthBarBG.scrollFactor.set();
@@ -329,86 +386,268 @@ class CharacterEditorState extends MusicBeatState
 		UI_box.addGroup(tab_group);
 	}*/
 
-	var TemplateCharacter:String = '{
-			"animations": [
-				{
-					"loop": false,
-					"offsets": [
-						0,
-						0
-					],
-					"fps": 24,
-					"anim": "idle",
-					"indices": [],
-					"name": "Dad idle dance"
-				},
-				{
-					"offsets": [
-						0,
-						0
-					],
-					"indices": [],
-					"fps": 24,
-					"anim": "singLEFT",
-					"loop": false,
-					"name": "Dad Sing Note LEFT"
-				},
-				{
-					"offsets": [
-						0,
-						0
-					],
-					"indices": [],
-					"fps": 24,
-					"anim": "singDOWN",
-					"loop": false,
-					"name": "Dad Sing Note DOWN"
-				},
-				{
-					"offsets": [
-						0,
-						0
-					],
-					"indices": [],
-					"fps": 24,
-					"anim": "singUP",
-					"loop": false,
-					"name": "Dad Sing Note UP"
-				},
-				{
-					"offsets": [
-						0,
-						0
-					],
-					"indices": [],
-					"fps": 24,
-					"anim": "singRIGHT",
-					"loop": false,
-					"name": "Dad Sing Note RIGHT"
-				}
-			],
-			"no_antialiasing": false,
-			"image": "characters/DADDY_DEAREST",
-			"position": [
-				0,
-				0
-			],
-			"healthicon": "face",
-			"flip_x": false,
-			"healthbar_colors": [
-				161,
-				161,
-				161
-			],
-			"camera_position": [
-				0,
-				0
-			],
-			"sing_duration": 6.1,
-			"scale": 1
-		}';
+	var dad:String = '{
+		"animations": [
+			{
+				"loop": false,
+				"offsets": [
+					0,
+					0
+				],
+				"offsets_player":[
+					0,
+					0
+				],
+				"fps": 24,
+				"anim": "idle",
+				"indices": [],
+				"name": "Dad idle dance"
+			},
+			{
+				"offsets": [
+					0,
+					0
+				],
+				"offsets_player":[
+					0,
+					0
+				],
+				"indices": [],
+				"fps": 24,
+				"anim": "singLEFT",
+				"loop": false,
+				"name": "Dad Sing Note LEFT"
+			},
+			{
+				"offsets": [
+					0,
+					0
+				],
+				"offsets_player":[
+					0,
+					0
+				],
+				"indices": [],
+				"fps": 24,
+				"anim": "singDOWN",
+				"loop": false,
+				"name": "Dad Sing Note DOWN"
+			},
+			{
+				"offsets": [
+					0,
+					0
+				],
+				"offsets_player":[
+					0,
+					0
+				],
+				"indices": [],
+				"fps": 24,
+				"anim": "singUP",
+				"loop": false,
+				"name": "Dad Sing Note UP"
+			},
+			{
+				"offsets": [
+					0,
+					0
+				],
+				"offsets_player":[
+					0,
+					0
+				],
+				"indices": [],
+				"fps": 24,
+				"anim": "singRIGHT",
+				"loop": false,
+				"name": "Dad Sing Note RIGHT"
+			}
+		],
+		"no_antialiasing": false,
+		"image": "characters/DADDY_DEAREST",
+		"position": [
+			0,
+			0
+		],
+		"healthicon": "face",
+		"style_note": "normal",
+		"flip_x": false,
+		"healthbar_colors": [
+			161,
+			161,
+			161
+		],
+		"camera_position": [
+			0,
+			0
+		],
+		"sing_duration": 4,
+		"scale": 1
+	}';
 
+	var boyfriend:String = '{
+		"animations": [
+			{
+				"loop": false,
+				"offsets": [
+					0,
+					0
+				],
+				"offsets_player":[
+					0,
+					0
+				],
+				"fps": 24,
+				"anim": "idle",
+				"indices": [],
+				"name": "BF idle dance"
+			},
+			{
+				"offsets": [
+					0,
+					0
+				],
+				"offsets_player":[
+					0,
+					0
+				],
+				"indices": [],
+				"fps": 24,
+				"anim": "singLEFT",
+				"loop": false,
+				"name": "BF NOTE LEFT0"
+			},
+			{
+				"offsets": [
+					0,
+					0
+				],
+				"offsets_player":[
+					0,
+					0
+				],
+				"indices": [],
+				"fps": 24,
+				"anim": "singDOWN",
+				"loop": false,
+				"name": "BF NOTE DOWN0"
+			},
+			{
+				"offsets": [
+					0,
+					0
+				],
+				"offsets_player":[
+					0,
+					0
+				],
+				"indices": [],
+				"fps": 24,
+				"anim": "singUP",
+				"loop": false,
+				"name": "BF NOTE UP0"
+			},
+			{
+				"offsets": [
+					0,
+					0
+				],
+				"offsets_player":[
+					0,
+					0
+				],
+				"indices": [],
+				"fps": 24,
+				"anim": "singRIGHT",
+				"loop": false,
+				"name": "BF NOTE RIGHT0"
+			},
+			{
+				"offsets": [
+					0,
+					0
+				],
+				"offsets_player":[
+					0,
+					0
+				],
+				"indices": [],
+				"fps": 24,
+				"anim": "singLEFT",
+				"loop": false,
+				"name": "BF NOTE LEFT MISS"
+			},
+			{
+				"offsets": [
+					0,
+					0
+				],
+				"offsets_player":[
+					0,
+					0
+				],
+				"indices": [],
+				"fps": 24,
+				"anim": "singDOWN",
+				"loop": false,
+				"name": "BF NOTE DOWN MISS"
+			},
+			{
+				"offsets": [
+					0,
+					0
+				],
+				"offsets_player":[
+					0,
+					0
+				],
+				"indices": [],
+				"fps": 24,
+				"anim": "singUP",
+				"loop": false,
+				"name": "BF NOTE UP MISS"
+			},
+			{
+				"offsets": [
+					0,
+					0
+				],
+				"offsets_player":[
+					0,
+					0
+				],
+				"indices": [],
+				"fps": 24,
+				"anim": "singRIGHT",
+				"loop": false,
+				"name": "BF NOTE RIGHT MISS"
+			}			
+		],
+		"no_antialiasing": false,
+		"image": "characters/BOYFRIEND",
+		"position": [
+			0,
+			0
+		],
+		"healthicon": "face",
+		"style_note": "normal",
+		"flip_x": false,
+		"healthbar_colors": [
+			161,
+			161,
+			161
+		],
+		"camera_position": [
+			0,
+			0
+		],
+		"sing_duration": 4,
+		"scale": 1
+	}';
+	
 	var charDropDown:FlxUIDropDownMenuCustom;
+	var styleDropDown:FlxUIDropDownMenuCustom;
 	function addSettingsUI() {
 		var tab_group = new FlxUI(null, UI_box);
 		tab_group.name = "Settings";
@@ -435,6 +674,15 @@ class CharacterEditorState extends MusicBeatState
 		charDropDown.selectedLabel = daAnim;
 		reloadCharacterDropDown();
 
+		styleDropDown = new FlxUIDropDownMenuCustom(-310, 30, FlxUIDropDownMenuCustom.makeStrIdLabelArray(arrowList, true), function(arrows:String)
+		{
+			char.noteStyle = arrowList[Std.parseInt(arrows)];
+			updatePresence();
+			reloadCharacterDropDown();
+		});
+		styleDropDown.selectedLabel = char.noteStyle;
+		reloadCharacterDropDown();
+
 		var reloadCharacter:FlxButton = new FlxButton(140, 20, "Reload Char", function()
 		{
 			loadChar(!check_player.checked);
@@ -443,6 +691,8 @@ class CharacterEditorState extends MusicBeatState
 
 		var templateCharacter:FlxButton = new FlxButton(140, 50, "Load Template", function()
 		{
+			var TemplateCharacter:String = dad;
+			if(char.isPlayer) TemplateCharacter = boyfriend;
 			var parsedJson:CharacterFile = cast Json.parse(TemplateCharacter);
 			var characters:Array<Character> = [char, ghostChar];
 			for (character in characters)
@@ -451,6 +701,7 @@ class CharacterEditorState extends MusicBeatState
 				character.animationsArray = parsedJson.animations;
 				for (anim in character.animationsArray)
 				{
+					if(character.isPlayer) character.addOffset(anim.anim, anim.offsets_player[0], anim.offsets_player[1]);
 					character.addOffset(anim.anim, anim.offsets[0], anim.offsets[1]);
 				}
 				if(character.animationsArray[0] != null) {
@@ -458,6 +709,7 @@ class CharacterEditorState extends MusicBeatState
 				}
 
 				character.singDuration = parsedJson.sing_duration;
+				character.noteStyle = parsedJson.style_note;
 				character.positionArray = parsedJson.position;
 				character.cameraPosition = parsedJson.camera_position;
 				
@@ -484,6 +736,7 @@ class CharacterEditorState extends MusicBeatState
 		tab_group.add(check_player);
 		tab_group.add(reloadCharacter);
 		tab_group.add(charDropDown);
+		tab_group.add(styleDropDown);
 		tab_group.add(reloadCharacter);
 		tab_group.add(templateCharacter);
 		UI_box.addGroup(tab_group);
@@ -656,9 +909,19 @@ class CharacterEditorState extends MusicBeatState
 			}
 
 			var lastOffsets:Array<Int> = [0, 0];
+			var idk:Array<Int> = [0, 0];
 			for (anim in char.animationsArray) {
 				if(animationInputText.text == anim.anim) {
-					lastOffsets = anim.offsets;
+					if(char.isPlayer)
+					{
+						idk = anim.offsets_player;
+					}
+					else
+					{
+						lastOffsets = anim.offsets;
+					}
+					
+					
 					if(char.animation.getByName(animationInputText.text) != null) {
 						char.animation.remove(animationInputText.text);
 					}
@@ -672,7 +935,8 @@ class CharacterEditorState extends MusicBeatState
 				fps: Math.round(animationNameFramerate.value),
 				loop: animationLoopCheckBox.checked,
 				indices: indices,
-				offsets: lastOffsets
+				offsets: lastOffsets,
+				offsets_player: idk,
 			};
 			if(indices != null && indices.length > 0) {
 				char.animation.addByIndices(newAnim.anim, newAnim.name, newAnim.indices, "", newAnim.fps, newAnim.loop);
@@ -1019,7 +1283,10 @@ class CharacterEditorState extends MusicBeatState
 				ghostChar.animation.addByPrefix(animAnim, animName, animFps, animLoop);
 			}
 
-			if(anim.offsets != null && anim.offsets.length > 1) {
+			if(ghostChar.isPlayer && anim.offsets_player != null && anim.offsets_player.length > 1) {
+				ghostChar.addOffset(anim.anim, anim.offsets_player[0], anim.offsets_player[1]);
+			}
+			else if(anim.offsets != null && anim.offsets.length > 1) {
 				ghostChar.addOffset(anim.anim, anim.offsets[0], anim.offsets[1]);
 			}
 		}
@@ -1180,10 +1447,13 @@ class CharacterEditorState extends MusicBeatState
 				}
 				if (FlxG.keys.justPressed.R)
 				{
-					char.animationsArray[curAnim].offsets = [0, 0];
-					
-					char.addOffset(char.animationsArray[curAnim].anim, char.animationsArray[curAnim].offsets[0], char.animationsArray[curAnim].offsets[1]);
-					ghostChar.addOffset(char.animationsArray[curAnim].anim, char.animationsArray[curAnim].offsets[0], char.animationsArray[curAnim].offsets[1]);
+					var offsets:Array<Int> = char.animationsArray[curAnim].offsets;
+					if(char.isPlayer && char.animationsArray[curAnim].offsets_player != null) offsets = char.animationsArray[curAnim].offsets_player;
+
+					offsets = [0, 0];
+
+					char.addOffset(char.animationsArray[curAnim].anim, offsets[0], offsets[1]);
+					ghostChar.addOffset(char.animationsArray[curAnim].anim, offsets[0], offsets[1]);
 					genBoyOffsets();
 				}
 
@@ -1203,10 +1473,14 @@ class CharacterEditorState extends MusicBeatState
 
 						var negaMult:Int = 1;
 						if(i % 2 == 1) negaMult = -1;
-						char.animationsArray[curAnim].offsets[arrayVal] += negaMult * multiplier;
-						
-						char.addOffset(char.animationsArray[curAnim].anim, char.animationsArray[curAnim].offsets[0], char.animationsArray[curAnim].offsets[1]);
-						ghostChar.addOffset(char.animationsArray[curAnim].anim, char.animationsArray[curAnim].offsets[0], char.animationsArray[curAnim].offsets[1]);
+
+
+						var offsets:Array<Int> = char.animationsArray[curAnim].offsets;
+						if(char.isPlayer && char.animationsArray[curAnim].offsets_player != null) offsets = char.animationsArray[curAnim].offsets_player;
+						offsets[arrayVal] += negaMult * multiplier;
+
+						char.addOffset(char.animationsArray[curAnim].anim, offsets[0], offsets[1]);
+						ghostChar.addOffset(char.animationsArray[curAnim].anim, offsets[0], offsets[1]);
 						
 						char.playAnim(char.animationsArray[curAnim].anim, false);
 						if(ghostChar.animation.curAnim != null && char.animation.curAnim != null && char.animation.curAnim.name == ghostChar.animation.curAnim.name) {
@@ -1279,6 +1553,7 @@ class CharacterEditorState extends MusicBeatState
 			"scale": char.jsonScale,
 			"sing_duration": char.singDuration,
 			"healthicon": char.healthIcon,
+			"style_note": char.noteStyle,
 		
 			"position":	char.positionArray,
 			"camera_position": char.cameraPosition,
