@@ -25,6 +25,7 @@ class MasterEditorMenu extends MusicBeatState
 		'Menu Character Editor',
 		'Dialogue Editor',
 		'Dialogue Portrait Editor',
+		'Stage Editor',
 		'Character Editor',
 		'Chart Editor'
 	];
@@ -121,6 +122,8 @@ class MasterEditorMenu extends MusicBeatState
 					MusicBeatState.switchState(new MenuCharacterEditorState());
 				case 'Dialogue Portrait Editor':
 					LoadingState.loadAndSwitchState(new DialogueCharacterEditorState(), false);
+				case 'Stage Editor':
+					LoadingState.loadAndSwitchState(new StageEditorState(Stage.DEFAULT_STAGE, false));
 				case 'Dialogue Editor':
 					LoadingState.loadAndSwitchState(new DialogueEditorState(), false);
 				case 'Chart Editor'://felt it would be cool maybe
