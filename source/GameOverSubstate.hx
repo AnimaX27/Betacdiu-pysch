@@ -138,6 +138,10 @@ class GameOverSubstate extends MusicBeatSubstate
 	function coolStartDeath(?volume:Float = 1):Void
 	{
 		FlxG.sound.playMusic(Paths.music(loopSoundName), volume);
+		if(PlayState.instance.dad.curCharacter == 'tankman')
+		{
+			FlxG.sound.play(Paths.soundRandom('jeffGameover/jeffGameover-', 1, 25,'week7'), volume);
+		}
 	}
 
 	function endBullshit():Void

@@ -8,6 +8,7 @@ import flixel.animation.FlxBaseAnimation;
 import flixel.graphics.frames.FlxAtlasFrames;
 import flixel.tweens.FlxTween;
 import flixel.util.FlxSort;
+import flixel.util.FlxColor;
 import Section.SwagSection;
 #if MODS_ALLOWED
 import sys.io.File;
@@ -26,7 +27,8 @@ typedef CharacterFile = {
 	var scale:Float;
 	var sing_duration:Float;
 	var healthicon:String;
-	var style_note:String;
+	var noteStyle:String;
+	var noteSkin:String;
 
 	var position:Array<Float>;
 	var camera_position:Array<Float>;
@@ -62,26 +64,33 @@ class Character extends FlxSprite
 	public var stunned:Bool = false;
 	public var singDuration:Float = 4; //Multiplier of how long a character holds the sing pose
 	public var idleSuffix:String = '';
+	public var suffix:String = '';
 	public var danceIdle:Bool = false; //Character use "danceLeft" and "danceRight" instead of "idle"
 	
 
 	public var healthIcon:String = 'face';
-	public var noteStyle:String = 'normal';
+	public var arrowSkin:String = null;
+	public var splashSkin:String = PlayState.SONG.splashSkin;
+	public var noteStyle:String = null;
+	public var isPixelArrow:Bool = false;
+
 	public var animationsArray:Array<AnimArray> = [];
 
 	public var positionArray:Array<Float> = [0, 0];
 	public var cameraPosition:Array<Float> = [0, 0];
+	public var arrowColors:Array<Array<Int>> = [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]];
 
 	public var hasMissAnimations:Bool = false;
 	public var swapIt:Bool = false;
 
 	//Used on Character Editor
 	public var imageFile:String = '';
+	public var offsetsFile:String = '';
 	public var jsonScale:Float = 1;
 	public var noAntialiasing:Bool = false;
 	public var originalFlipX:Bool = false;
 	public var healthColorArray:Array<Int> = [255, 0, 0];
-
+	//Used on Lua
 	public static var DEFAULT_CHARACTER:String = 'bf'; //In case a character is missing, it will use BF on its place
 	public function new(x:Float, y:Float, ?character:String = 'bf', ?isPlayer:Bool = false)
 	{
@@ -103,19 +112,12 @@ class Character extends FlxSprite
 			default:
 				var characterPath:String = 'characters/' + curCharacter + '.json';
 				#if MODS_ALLOWED
-				
-				
-				
-				
 				var path:String = Paths.modFolders(characterPath);
 				if (!FileSystem.exists(path)) {
 					path = Paths.getPreloadPath(characterPath);
 				}
 
 				if (!FileSystem.exists(path))
-				
-				
-				
 				#else
 				var path:String = Paths.getPreloadPath(characterPath);
 				if (!Assets.exists(path))
@@ -151,10 +153,7 @@ class Character extends FlxSprite
 					spriteType = "packer";
 					
 				}
-				
-				
-				
-				
+
 				#if MODS_ALLOWED
 				var modAnimToFind:String = Paths.modFolders('images/' + json.image + '/Animation.json');
 				var animToFind:String = Paths.getPath('images/' + json.image + '/Animation.json', TEXT);
@@ -171,10 +170,7 @@ class Character extends FlxSprite
 					spriteType = "texture";
 					
 				}
-				
-				
-				
-				
+
 				switch (spriteType){
 					
 					case "packer":
@@ -201,7 +197,12 @@ class Character extends FlxSprite
 				cameraPosition = json.camera_position;
 
 				healthIcon = json.healthicon;
-				noteStyle = json.style_note;
+				arrowSkin = json.noteSkin;
+				if(arrowSkin == null)
+					arrowSkin = 'NOTE_assets';
+				noteStyle = json.noteStyle;
+				if(noteStyle == null)
+					noteStyle = 'normal';
 				singDuration = json.sing_duration;
 				flipX = !!json.flip_x;
 				if(json.no_antialiasing) {
@@ -252,58 +253,53 @@ class Character extends FlxSprite
 			flipX = !flipX;
 
 			/*// Doesn't flip for BF, since his are already in the right place???*/
-			if (!curCharacter.startsWith('bf'))
+			if (!curCharacter.contains('bf'))
 			{
 				// var animArray
-				if(animation.getByName('singLEFT') != null && animation.getByName('singRIGHT') != null)
-				{
-					var oldRight = animation.getByName('singRIGHT').frames;
-					animation.getByName('singRIGHT').frames = animation.getByName('singLEFT').frames;
-					animation.getByName('singLEFT').frames = oldRight;
-				}
+				var oldRight = animation.getByName('singRIGHT' + suffix).frames;
+				animation.getByName('singRIGHT' + suffix).frames = animation.getByName('singLEFT' + suffix).frames;
+				animation.getByName('singLEFT' + suffix).frames = oldRight;
 
 				// IF THEY HAVE MISS ANIMATIONS??
-				if (animation.getByName('singLEFTmiss') != null && animation.getByName('singRIGHTmiss') != null)
+				if (animation.getByName('singRIGHTmiss' + suffix) != null)
 				{
-					var oldMiss = animation.getByName('singRIGHTmiss').frames;
-					animation.getByName('singRIGHTmiss').frames = animation.getByName('singLEFTmiss').frames;
-					animation.getByName('singLEFTmiss').frames = oldMiss;
+					var oldMiss = animation.getByName('singRIGHTmiss' + suffix).frames;
+					animation.getByName('singRIGHTmiss' + suffix).frames = animation.getByName('singLEFTmiss' + suffix).frames;
+					animation.getByName('singLEFTmiss' + suffix).frames = oldMiss;
 				}
 
-				// IF THEY HAVE ALT ANIMATIONS??
-				if(animation.getByName('singLEFT-alt') != null && animation.getByName('singRIGHT-alt') != null)
+				//IF THEY HAVE LOOP ANIMATIONS??
+				if (animation.getByName('singRIGHT'+ suffix +'-loop') != null)
 				{
-					var oldAlt = animation.getByName('singRIGHT-alt').frames;
-					animation.getByName('singRIGHT-alt').frames = animation.getByName('singLEFT-alt').frames;
-					animation.getByName('singLEFT-alt').frames = oldAlt;
+					var oldAlt = animation.getByName('singRIGHT'+ suffix +'-loop').frames;
+					animation.getByName('singRIGHT'+ suffix +'-loop').frames = animation.getByName('singLEFT'+ suffix +'-loop').frames;
+					animation.getByName('singLEFT'+ suffix +'-loop').frames = oldAlt;
 				}
 			}
 		}
 		else
 		{
-			if (curCharacter.startsWith('bf'))
+			if (curCharacter.contains('bf'))
 			{
-				if(animation.getByName('singLEFT') != null && animation.getByName('singRIGHT') != null)
-				{
-					var oldLeft = animation.getByName('singLEFT').frames;
-					animation.getByName('singLEFT').frames = animation.getByName('singRIGHT').frames;
-					animation.getByName('singRIGHT').frames = oldLeft;
-				}
+				// var animArray
+				var oldRight = animation.getByName('singRIGHT'+ suffix).frames;
+				animation.getByName('singRIGHT'+ suffix).frames = animation.getByName('singLEFT'+ suffix).frames;
+				animation.getByName('singLEFT'+ suffix).frames = oldRight;
 
 				// IF THEY HAVE MISS ANIMATIONS??
-				if (animation.getByName('singLEFTmiss') != null && animation.getByName('singRIGHTmiss') != null)
+				if (animation.getByName('singRIGHTmiss' + suffix) != null)
 				{
-					var oldMiss = animation.getByName('singLEFTmiss').frames;
-					animation.getByName('singLEFTmiss').frames = animation.getByName('singRIGHTmiss').frames;
-					animation.getByName('singRIGHTmiss').frames = oldMiss;
+					var oldMiss = animation.getByName('singRIGHTmiss' + suffix).frames;
+					animation.getByName('singRIGHTmiss' + suffix).frames = animation.getByName('singLEFTmiss' + suffix).frames;
+					animation.getByName('singLEFTmiss' + suffix).frames = oldMiss;
 				}
 
-				// IF THEY HAVE ALT ANIMATIONS??
-				if(animation.getByName('singLEFT-alt') != null && animation.getByName('singRIGHT-alt') != null)
+				//IF THEY HAVE LOOP ANIMATIONS??
+				if (animation.getByName('singRIGHT'+ suffix +'-loop') != null)
 				{
-					var oldAlt = animation.getByName('singLEFT-alt').frames;
-					animation.getByName('singLEFT-alt').frames = animation.getByName('singRIGHT-alt').frames;
-					animation.getByName('singRIGHT-alt').frames = oldAlt;
+					var oldAlt = animation.getByName('singRIGHT'+ suffix +'-loop').frames;
+					animation.getByName('singRIGHT'+ suffix +'-loop').frames = animation.getByName('singLEFT'+ suffix +'-loop').frames;
+					animation.getByName('singLEFT'+ suffix +'-loop').frames = oldAlt;
 				}
 			}
 		}
@@ -353,6 +349,44 @@ class Character extends FlxSprite
 		super.update(elapsed);
 	}
 
+	public function loadOffsetFile(character:String)
+	{
+		var offset:Array<String>;
+
+		if (isPlayer){
+			try {
+				offset = CoolUtil.coolTextFile(Paths.getPath('images/characters/offsets/' + character + "PlayerOffsets.txt", TEXT));
+			} catch (e) {
+				try {
+					offset = CoolUtil.coolTextFile(Paths.getPath('images/characters/offsets/' + character + "Offsets.txt", TEXT));
+				}
+				catch(e) {
+					offset = CoolUtil.coolTextFile(Paths.getPath('images/characters/offsets/noOffsets.txt', TEXT));
+				}	
+			}
+			
+		}
+		else{
+			try {
+				offset = CoolUtil.coolTextFile(Paths.getPath('images/characters/offsets/' + character + "Offsets.txt", TEXT));
+			} catch (e) {
+				try {
+					offset = CoolUtil.coolTextFile(Paths.getPath('images/characters/offsets/' + character + "PlayerOffsets.txt", TEXT));
+				}
+				catch(e) {
+					offset = CoolUtil.coolTextFile(Paths.getPath('images/characters/offsets/noOffsets.txt', TEXT));
+				}		
+			}
+		}
+		
+
+		for (i in 0...offset.length)
+		{
+			var data:Array<String> = offset[i].split(' ');
+			addOffset(data[0], Std.parseInt(data[1]), Std.parseInt(data[2]));
+		}
+	}
+
 	public var danced:Bool = false;
 
 	/**
@@ -374,6 +408,8 @@ class Character extends FlxSprite
 			else if(animation.getByName('idle' + idleSuffix) != null) {
 					playAnim('idle' + idleSuffix);
 			}
+
+			if (color != FlxColor.WHITE && !(curCharacter.startsWith('gf') && PlayState.curStage == 'hallway') && !(!isPlayer && PlayState.curStage == 'alleys' && !curCharacter.contains('hypno'))) color = FlxColor.WHITE;
 		}
 	}
 
@@ -408,8 +444,27 @@ class Character extends FlxSprite
 		}
 	}
 
+	public var danceEveryNumBeats:Int = 2;
+	private var settingCharacterUp:Bool = true;
 	public function recalculateDanceIdle() {
+		var lastDanceIdle:Bool = danceIdle;
 		danceIdle = (animation.getByName('danceLeft' + idleSuffix) != null && animation.getByName('danceRight' + idleSuffix) != null);
+
+		if(settingCharacterUp)
+		{
+			danceEveryNumBeats = (danceIdle ? 1 : 2);
+		}
+		else if(lastDanceIdle != danceIdle)
+		{
+			var calc:Float = danceEveryNumBeats;
+			if(danceIdle)
+				calc /= 2;
+			else
+				calc *= 2;
+
+			danceEveryNumBeats = Math.round(Math.max(calc, 1));
+		}
+		settingCharacterUp = false;
 	}
 
 	public function addOffset(name:String, x:Float = 0, y:Float = 0)

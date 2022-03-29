@@ -23,9 +23,36 @@ import flixel.input.keyboard.FlxKey;
 
 using StringTools;
 
+typedef MainMenuData = 
+{
+	var storyMode:Array<Sprite>;
+	var freeplay:Array<Sprite>;
+	var mods:Array<Sprite>;
+	var awards:Array<Sprite>;
+	var credits:Array<Sprite>;
+	var donate:Array<Sprite>;
+	var options:Array<Sprite>;
+	var background:Array<Sprite>;
+	var magenta:Array<Sprite>;
+}
+
+
+typedef Sprite = {
+	var image:String;
+	var antialiasing:Bool;//In Case you want Pixels?
+	var anim:String;
+	var postions:Array<Float>;
+	var scrollFactor:Array<Float>;
+	var scale:Float;
+	var center:Array<Bool>;
+	var screenCenter:Bool;
+	var flip:Array<Bool>;
+	var color:Array<Int>;
+}
+
 class MainMenuState extends MusicBeatState
 {
-	public static var psychEngineVersion:String = '0.5.1-git'; //This is also used for Discord RPC
+	public static var psychEngineVersion:String = '0.5.2h'; //This is also used for Discord RPC
 	public static var curSelected:Int = 0;
 
 	var menuItems:FlxTypedGroup<FlxSprite>;
@@ -46,11 +73,11 @@ class MainMenuState extends MusicBeatState
 	var camFollow:FlxObject;
 	var camFollowPos:FlxObject;
 	var debugKeys:Array<FlxKey>;
+	var menuJSON:MainMenuData;
+	var spriteJSON:Array<Sprite>;
 
 	override function create()
 	{
-		WeekData.loadTheFirstEnabledMod();
-
 		#if desktop
 		// Updating Discord Rich Presence
 		DiscordClient.changePresence("In the Menus", null);
@@ -70,7 +97,77 @@ class MainMenuState extends MusicBeatState
 
 		persistentUpdate = persistentDraw = true;
 
+		// IGNORE THIS!!!
+		/*menuJSON = Json.parse(Paths.getTextFromFile('images/mainMenu.json'));*/
+
 		var yScroll:Float = Math.max(0.25 - (0.05 * (optionShit.length - 4)), 0.1);
+		/*var bg:FlxSprite;
+		if(menuJSON.background != null && menuJSON.background.length > 0) {
+			for (sprite in spriteJSON) {
+				var image:String = sprite.image;
+				var postions:Array = sprite.postions;
+				var scrollFactor:Array = sprite.scrollFactor;
+				var center:Array = sprite.center;
+				var flip:Array = sprite.flip;
+				var scale:Float = sprite.scale;
+				var antialiasing:Bool = sprite.antialiasing;
+				var color:Array = sprite.color;
+
+				if(postions != null && postions.length > 0) {
+					bg.x = postions[0];
+					bg.y = postions[1];
+				} else {
+					bg.x = -80;
+					bg.y = 0;
+				}
+
+				if(image != null && image.length > 0) {
+					bg.loadGraphic(Paths.image(image));
+				} else {
+					bg.loadGraphic(Paths.image('menuBG'));
+				}
+
+				if(scrollFactor != null && scrollFactor.length > 0) {
+					bg.scrollFactor.set(scrollFactor[0], scrollFactor[1]);
+				} else {
+					bg.scrollFactor.set(0, yScroll);
+				}
+
+				if(scale != null && scale.length > 0) {
+					bg.setGraphicSize(Std.int(bg.width * scale));
+					bg.updateHitbox();
+				} else {
+					bg.setGraphicSize(Std.int(bg.width * 1.175));
+					bg.updateHitbox();
+				}
+
+				if(antialiasing != null && antialiasing.length > 0) {
+					bg.antialiasing = antialiasing;
+				} else{
+					bg.antialiasing = ClientPrefs.globalAntialiasing;
+				}
+				
+
+				if(center[0] && sprite.screenCenter) {
+					bg.screenCenter(X);
+				} else if(center[1] && sprite.screenCenter) {
+					bg.screenCenter(Y);
+				} else if(sprite.screenCenter) {
+					bg.screenCenter();
+				}
+
+				if(flip[0]){
+					bg.flipX = true;
+				} else if(flip[1]) {
+					bg.flipY = true;
+				}
+
+				if(color != null && color.length > 0) {
+					bg.color = color;
+				}
+			}
+		}*/
+
 		var bg:FlxSprite = new FlxSprite(-80).loadGraphic(Paths.image('menuBG'));
 		bg.scrollFactor.set(0, yScroll);
 		bg.setGraphicSize(Std.int(bg.width * 1.175));
@@ -93,6 +190,62 @@ class MainMenuState extends MusicBeatState
 		magenta.antialiasing = ClientPrefs.globalAntialiasing;
 		magenta.color = 0xFFfd719b;
 		add(magenta);
+
+		/*if(menuJSON.background != null && menuJSON.background.length > 0) {
+			for (sprite in spriteJSON) {
+				var image:String = sprite.image;
+				var postions:Array = sprite.postions;
+				var scrollFactor:Array = sprite.scrollFactor;
+				var center:Array = sprite.center;
+				var flip:Array = sprite.flip;
+				var scale:Float = sprite.scale;
+				var antialiasing:Bool = sprite.antialiasing;
+
+				if(postions != null && postions.length > 0) {
+					bg.x = postions[0];
+					bg.y = postions[1];
+				} else {
+					bg.x = -80;
+					bg.y = 0;
+				}
+
+				if(image != null && image.length > 0) {
+					bg.loadGraphic(Paths.image(image));
+				} else {
+					bg.loadGraphic(Paths.image('menuBG'));
+				}
+
+				if(scrollFactor != null && scrollFactor.length > 0) {
+					bg.scrollFactor.set(scrollFactor[0], scrollFactor[1]);
+				} else {
+					bg.scrollFactor.set(0, yScroll);
+				}
+
+				if(scale != null && scale.length > 0) {
+					bg.setGraphicSize(Std.int(bg.width * scale));
+					bg.updateHitbox();
+				} else {
+					bg.setGraphicSize(Std.int(bg.width * 1.175));
+					bg.updateHitbox();
+				}
+
+				bg.antialiasing = antialiasing;
+
+				if(center[0] && sprite.screenCenter) {
+					bg.screenCenter(X);
+				} else if(center[1] && sprite.screenCenter) {
+					bg.screenCenter(Y);
+				} else if(sprite.screenCenter) {
+					bg.screenCenter();
+				}
+
+				if(flip[0]){
+					bg.flipX = true;
+				} else if(flip[1]) {
+					bg.flipY = true;
+				}
+			}
+		}*/
 		
 		// magenta.scrollFactor.set();
 
@@ -152,6 +305,8 @@ class MainMenuState extends MusicBeatState
 			}
 		}
 		#end
+
+
 
 		super.create();
 	}
